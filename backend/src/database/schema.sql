@@ -191,3 +191,9 @@ CREATE TABLE IF NOT EXISTS clinic_settings (
 INSERT INTO clinic_settings (id, clinic_name, tagline, phone, email, address, registration_number, logo_url, website, tax_id, currency_symbol, revisit_validity_days, receipt_footer_note)
 VALUES (1, 'AuraCare Clinic', 'Comprehensive Clinical Practice & Multispeciality OPD', '+91 98000 00000', 'contact@auracareclinic.com', '108 Healthcare Blvd, Central District, Pune, Maharashtra 411001', 'MC-PUN-2024-8891', NULL, 'https://auracare.clinic', 'GSTIN-27AAAAA0000A1Z5', '₹', 14, 'Thank you for choosing AuraCare Clinic. Please bring this document for your follow-up consultation.')
 ON CONFLICT (id) DO NOTHING;
+
+-- Default Super Admin User (Login: admin@clinic.com | Password: Admin@123)
+INSERT INTO users (full_name, email, phone, password_hash, role, is_active)
+VALUES ('Dr. Alexander Wright', 'admin@clinic.com', '+91 98000 00001', '$2b$10$cLxk5jiKoyzW/QuNAmioC.aiqupL6486XUEJ2z2U3fTFDl2nS5aCG', 'ADMIN', true)
+ON CONFLICT (email) DO NOTHING;
+
