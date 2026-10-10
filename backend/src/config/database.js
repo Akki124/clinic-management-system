@@ -7,13 +7,11 @@ const pool = connectionString
   ? new Pool({
       connectionString,
       ssl:
-        process.env.NODE_ENV === 'production' ||
-        process.env.DB_SSL === 'true' ||
-        connectionString.includes('sslmode=require') ||
-        connectionString.includes('neon.tech') ||
-        connectionString.includes('supabase.co')
-          ? { rejectUnauthorized: false }
-          : false,
+        process.env.DB_SSL === 'false' ||
+        connectionString.includes('localhost') ||
+        connectionString.includes('127.0.0.1')
+          ? false
+          : { rejectUnauthorized: false },
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
