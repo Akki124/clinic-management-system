@@ -4,7 +4,7 @@
   "private": true,
   "description": "Classical Homeopathy Clinic Management System",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build && cd .. && node -e \"const fs=require('fs'); fs.cpSync('frontend/dist', 'dist', {recursive:true});\"",
+    "build": "cd frontend && npm install --include=dev && npm run build && cd .. && node -e \"const fs=require('fs'); fs.cpSync('frontend/dist', 'dist', {recursive:true});\"",
     "start": "node backend/src/server.js",
     "migrate": "node backend/src/database/migrate.js"
   },
@@ -16,6 +16,7 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.12.1",
     "multer": "^2.4.0",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "vite": "^6.0.1"
   }
 }
