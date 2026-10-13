@@ -12,22 +12,27 @@ async function migrateAndSeed() {
     console.log('✅ Tables created or verified successfully.');
 
     // Check if admin user already exists
-    const adminCheck = await pool.query("SELECT id FROM users WHERE email = 'admin@clinic.com'");
-    if (adminCheck.rows.length === 0) {
-      console.log('🌱 Seeding initial demo data...');
-      
-      const salt = await bcrypt.genSalt(10);
-      const adminPass = await bcrypt.hash('Admin@123', salt);
-      const doctorPass = await bcrypt.hash('Doctor@123', salt);
-      const staffPass = await bcrypt.hash('Reception@123', salt);
+    let adminRes = await pool.query("SELECT id FROM users WHERE email = 'admin@clinic.com'");
+    let adminId;
+    const salt = await bcrypt.genSalt(10);
+    const doctorPass = await bcrypt.hash('Doctor@123', salt);
+    const staffPass = await bcrypt.hash('Reception@123', salt);
 
-      // 1. Insert Admin
-      const adminRes = await pool.query(
+    if (adminRes.rows.length === 0) {
+      const adminPass = await bcrypt.hash('Admin@123', salt);
+      const insertedAdmin = await pool.query(
         `INSERT INTO users (full_name, email, phone, password_hash, role)
          VALUES ($1, $2, $3, $4, $5) RETURNING id`,
         ['Dr. Alexander Wright', 'admin@clinic.com', '+91 98000 00001', adminPass, 'ADMIN']
       );
-      const adminId = adminRes.rows[0].id;
+      adminId = insertedAdmin.rows[0].id;
+    } else {
+      adminId = adminRes.rows[0].id;
+    }
+
+    const docCheck = await pool.query('SELECT COUNT(*) FROM doctors');
+    if (parseInt(docCheck.rows[0].count, 10) === 0) {
+      console.log('🌱 Seeding initial demo data (Doctors, Staff, Patients, Visits, Bills)...');
 
       // 2. Insert Receptionists
       const rec1Res = await pool.query(
@@ -252,7 +257,7 @@ async function migrateAndSeed() {
 
       console.log('✅ Demo data seeded successfully with Admin, Doctors, Staff, Patients, Visits, Prescriptions, and Bills.');
     } else {
-      console.log('ℹ️ Admin user already exists. Skipping seed.');
+      console.log('ℹ️ Doctors and demo data already exist. Skipping seed.');
     }
   } catch (error) {
     console.error('❌ Migration / Seed Error:', error);
