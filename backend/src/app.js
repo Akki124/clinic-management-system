@@ -28,16 +28,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-// Static uploads directory (guarded for serverless environments)
+const os = require('os');
+let uploadsDir = path.join(__dirname, '../uploads');
 try {
-  const uploadsDir = path.join(__dirname, '../uploads');
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
-  app.use('/uploads', express.static(uploadsDir));
 } catch (err) {
-  console.warn('Uploads directory static mount skipped:', err.message);
+  uploadsDir = path.join(os.tmpdir(), 'clinic-uploads');
+  try {
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+  } catch (e) {}
 }
+app.use('/uploads', express.static(uploadsDir));
 
 // Health Check
 app.get(['/api/health', '/health'], (req, res) => {

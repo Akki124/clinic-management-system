@@ -3,9 +3,23 @@ const fs = require('fs');
 const multer = require('multer');
 const { query } = require('../config/database');
 
-const uploadsDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+const os = require('os');
+
+let uploadsDir = path.join(__dirname, '../../uploads');
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (err) {
+  // Read-only filesystem in serverless environments (Vercel/Lambda) -> fallback to /tmp
+  uploadsDir = path.join(os.tmpdir(), 'clinic-uploads');
+  try {
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+  } catch (e) {
+    console.warn('Fallback uploads directory creation skipped:', e.message);
+  }
 }
 
 // Multer storage for clinic logo
