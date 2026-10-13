@@ -31,7 +31,9 @@ async function request(endpoint, options = {}) {
       localStorage.removeItem('clinic_user');
       window.dispatchEvent(new Event('auth_logout'));
     }
-    const error = new Error(data.message || 'Something went wrong');
+    const error = new Error(
+      data.message || data.error || (response.status ? `Server error (HTTP ${response.status})` : 'Unable to connect to server')
+    );
     error.status = response.status;
     error.data = data;
     throw error;

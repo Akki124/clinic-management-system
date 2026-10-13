@@ -40,22 +40,56 @@ try {
 }
 
 // Health Check
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/health'], (req, res) => {
   res.json({ status: 'ok', service: 'Clinic Management API', timestamp: new Date() });
 });
 
-// Mount API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/patients', patientRoutes);
-app.use('/api/doctors', doctorRoutes);
-app.use('/api/staff', staffRoutes);
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/visits', visitRoutes);
-app.use('/api/prescriptions', prescriptionRoutes);
-app.use('/api/bills', billingRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/reports', reportsRoutes);
-app.use('/api/settings', settingsRoutes);
+// Diagnostic debug endpoint for verifying environment & cloud database on Vercel
+app.get(['/api/debug', '/debug'], async (req, res) => {
+  let dbStatus = 'untested';
+  let dbError = null;
+  let serverTime = null;
+  try {
+    const { pool } = require('./config/database');
+    const start = Date.now();
+    const result = await pool.query('SELECT NOW()');
+    serverTime = result.rows[0].now;
+    dbStatus = `connected successfully in ${Date.now() - start}ms`;
+  } catch (err) {
+    dbStatus = 'connection_failed';
+    dbError = err.message;
+  }
+
+  res.json({
+    status: 'ok',
+    environment: {
+      has_DATABASE_URL: !!process.env.DATABASE_URL,
+      database_host: process.env.DATABASE_URL
+        ? process.env.DATABASE_URL.replace(/.*@/, '').split('/')[0]
+        : 'none',
+      has_JWT_SECRET: !!process.env.JWT_SECRET,
+      NODE_ENV: process.env.NODE_ENV,
+    },
+    database: {
+      status: dbStatus,
+      serverTime,
+      error: dbError,
+    },
+  });
+});
+
+// Mount API routes (with /api and root prefix)
+app.use(['/api/auth', '/auth'], authRoutes);
+app.use(['/api/patients', '/patients'], patientRoutes);
+app.use(['/api/doctors', '/doctors'], doctorRoutes);
+app.use(['/api/staff', '/staff'], staffRoutes);
+app.use(['/api/appointments', '/appointments'], appointmentRoutes);
+app.use(['/api/visits', '/visits'], visitRoutes);
+app.use(['/api/prescriptions', '/prescriptions'], prescriptionRoutes);
+app.use(['/api/bills', '/bills'], billingRoutes);
+app.use(['/api/documents', '/documents'], documentRoutes);
+app.use(['/api/reports', '/reports'], reportsRoutes);
+app.use(['/api/settings', '/settings'], settingsRoutes);
 
 // 404 Handler
 app.use((req, res) => {

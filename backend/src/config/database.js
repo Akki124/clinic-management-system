@@ -3,8 +3,12 @@ require('dotenv').config();
 
 const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
-const pool = connectionString
-  ? new Pool({
+let pool;
+
+if (connectionString) {
+  // Reuse pool across warm serverless function invocations
+  if (!global._pgPool) {
+    global._pgPool = new Pool({
       connectionString,
       ssl:
         process.env.DB_SSL === 'false' ||
@@ -12,24 +16,28 @@ const pool = connectionString
         connectionString.includes('127.0.0.1')
           ? false
           : { rejectUnauthorized: false },
-      max: 10,
+      max: process.env.NODE_ENV === 'production' ? 4 : 10,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
-    })
-  : new Pool({
-      host: process.env.DB_HOST || '127.0.0.1',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || '12345',
-      database: process.env.DB_NAME || 'clinic_management_db',
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis: 15000,
     });
 
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle PostgreSQL client:', err);
-});
+    global._pgPool.on('error', (err) => {
+      console.error('Unexpected error on idle PostgreSQL client:', err.message);
+    });
+  }
+  pool = global._pgPool;
+} else {
+  pool = new Pool({
+    host: process.env.DB_HOST || '127.0.0.1',
+    port: parseInt(process.env.DB_PORT || '5432', 10),
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || '12345',
+    database: process.env.DB_NAME || 'clinic_management_db',
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  });
+}
 
 module.exports = {
   query: (text, params) => pool.query(text, params),
