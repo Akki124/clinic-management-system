@@ -1,7 +1,15 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+let connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+
+// Automatically map IPv6-only Supabase direct host to IPv4 connection pooler on Vercel/serverless
+if (connectionString && connectionString.includes('db.ngatqihxizhxnssqjulk.supabase.co')) {
+  connectionString = connectionString
+    .replace('postgres:', 'postgres.ngatqihxizhxnssqjulk:')
+    .replace('db.ngatqihxizhxnssqjulk.supabase.co:5432', 'aws-0-ap-northeast-2.pooler.supabase.com:6543')
+    .replace('db.ngatqihxizhxnssqjulk.supabase.co', 'aws-0-ap-northeast-2.pooler.supabase.com:6543');
+}
 
 let pool;
 
